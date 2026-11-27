@@ -1,5 +1,5 @@
 {
   "name": "processo",
-  "version": "0.1.0",
-  "description": "Processo de trabalho com agentes para Claude Code: quadro P-N, handoff, líder/especialista/testador e skills de sincronização."
+  "version": "0.2.0",
+  "description": "Processo de trabalho com agentes para Claude Code: quadro P-N, handoff, analista/especialista/testador como agentes, painel local e skills de sincronização."
 }
