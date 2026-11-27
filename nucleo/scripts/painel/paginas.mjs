@@ -82,7 +82,7 @@ export function dashboard(ctx) {
   corpo.push(`<div class="grade g2" style="margin-top:8px"><div><h2>Próximo passo</h2><div class="card">${handoff.existe ? (handoff.proximoPasso ? inline(handoff.proximoPasso).replace(/\n/g, "<br>") : '<span class="vazio">Handoff sem próximo passo.</span>') : '<span class="vazio">Sem HANDOFF.md ainda.</span>'}</div></div>`);
   corpo.push(`<div><h2>Pendências${config.dono ? ` de ${esc(config.dono)}` : " do dono"}</h2><div class="card">${lista(handoff.pendencias, "Nenhuma pendência registrada.")}</div></div></div>`);
   corpo.push(`<h2>Decisões recentes</h2><div class="card">${lista(decisoes, "Nenhuma decisão registrada em docs/DECISOES.md.")}</div>`);
-  return pagina({ titulo: "Dashboard", ativo: "/", projeto: config.nome, corpo: corpo.join("\n") });
+  return pagina({ titulo: "Dashboard", ativo: "/", ctx, corpo: corpo.join("\n") });
 }
 
 export function sistemas(ctx) {
@@ -97,7 +97,7 @@ export function sistemas(ctx) {
   if (!ctx.mapa) corpo.push(aviso("O mapa ainda não foi gerado. Rode <code>npm run mapa</code>."));
   corpo.push(cartoes.length ? `<div class="grade g3">${cartoes.join("")}</div>` : `<p class="vazio">Nenhum repositório mapeado.</p>`);
   corpo.push(`<p style="margin-top:16px"><a href="/sistemas/conexoes">Ver como os sistemas se conectam</a></p>`);
-  return pagina({ titulo: "Sistemas", ativo: "/sistemas", projeto: ctx.config.nome, corpo: corpo.join("\n") });
+  return pagina({ titulo: "Sistemas", ativo: "/sistemas", ctx, corpo: corpo.join("\n") });
 }
 
 function fato(rotulo, valor) {
@@ -134,7 +134,7 @@ export function sistema(ctx, nome) {
 <div class="grade g2"><div class="card rolagem"><table><tbody>${fatos}</tbody></table></div><div class="card"><h3>Leia primeiro</h3>${leia}<h3 style="margin-top:16px">Conexões</h3>${ligs}</div></div>
 <h2>Endereços achados</h2><div class="card">${enderecos}</div>
 <h2>Scripts</h2><div class="card">${scripts}</div>`;
-  return pagina({ titulo: nome, ativo: "/sistemas", projeto: ctx.config.nome, corpo });
+  return pagina({ titulo: nome, ativo: "/sistemas", ctx, corpo });
 }
 
 export function conexoes(ctx) {
@@ -146,7 +146,7 @@ export function conexoes(ctx) {
 ${svg ? `<div class="diagrama">${svg}</div>` : '<p class="vazio">Nada a desenhar. Preencha docs/CONEXOES.json ou rode <code>npm run mapa</code>.</p>'}
 <h2>Lista de ligações</h2>
 <div class="card rolagem">${linhas ? `<table><thead><tr><th>De</th><th>Para</th><th>Protocolo</th><th>Autenticação</th><th>Observação</th></tr></thead><tbody>${linhas}</tbody></table>` : '<p class="vazio">Nenhuma ligação.</p>'}</div>`;
-  return pagina({ titulo: "Conexões", ativo: "/sistemas/conexoes", projeto: ctx.config.nome, corpo });
+  return pagina({ titulo: "Conexões", ativo: "/sistemas/conexoes", ctx, corpo });
 }
 
 function linhaDoItem(quadro, item) {
@@ -162,7 +162,7 @@ export function quadro(ctx) {
 <div class="chips">${q.situacoes.map((s) => `<a href="#${esc(s.id)}">${badge(`${s.nome} ${s.itens.length}`, tomDaSituacao(s))}</a>`).join("")}</div>
 ${q.itens.length ? abertas.map(bloco).join("") : '<p class="vazio">Quadro vazio. Crie o primeiro item com <code>npm run backlog:add</code>.</p>'}
 ${fechadas.length ? `<details><summary>Itens fechados (${fechadas.reduce((n, s) => n + s.itens.length, 0)})</summary>${fechadas.map(bloco).join("")}</details>` : ""}`;
-  return pagina({ titulo: "Quadro", ativo: "/quadro", projeto: ctx.config.nome, corpo });
+  return pagina({ titulo: "Quadro", ativo: "/quadro", ctx, corpo });
 }
 
 function secaoItem(titulo, conteudo) {
@@ -223,9 +223,9 @@ ${secaoItem("Prints", prints)}
 ${secaoItem("Linha do tempo", tempo)}
 ${secaoItem("Achados extras", extras)}
 ${secaoItem("Texto sugerido", sugeridos)}`;
-  return pagina({ titulo: item.codigo, ativo: "/quadro", projeto: ctx.config.nome, corpo });
+  return pagina({ titulo: item.codigo, ativo: "/quadro", ctx, corpo });
 }
 
 export function naoEncontrada(ctx) {
-  return pagina({ titulo: "Não encontrada", ativo: "", projeto: ctx.config.nome, corpo: `<h1>Página não encontrada</h1><p><a href="/">Voltar ao dashboard</a></p>` });
+  return pagina({ titulo: "Não encontrada", ativo: "", ctx, corpo: `<h1>Página não encontrada</h1><p><a href="/">Voltar ao dashboard</a></p>` });
 }
