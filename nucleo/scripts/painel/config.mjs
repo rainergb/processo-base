@@ -30,6 +30,7 @@ export function lerConfig(raiz) {
     situacoes,
     repos: Array.isArray(vars.REPOS) ? vars.REPOS : [],
     porta: Number(vars.PAINEL_PORT) || 3340,
+    host: vars.PAINEL_HOST || "127.0.0.1",
     handoff: vars.HANDOFF_PATH || "docs/HANDOFF.md",
   };
 }

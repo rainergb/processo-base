@@ -36,6 +36,7 @@ export const LEGACY_DEFAULTS = {
   REPOS: [],
   PAINEL: false,
   PAINEL_PORT: 3340,
+  PAINEL_HOST: "127.0.0.1",
 };
 
 const CHOICES = {
@@ -138,6 +139,7 @@ export function defaultVars({ nome, prefixo, dono }) {
     REPOS: [],
     PAINEL: true,
     PAINEL_PORT: 3340,
+    PAINEL_HOST: "127.0.0.1",
   };
 }
 

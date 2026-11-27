@@ -219,21 +219,45 @@ test("painel serve dashboard, sistemas, conexões, quadro e item do exemplo", ()
   mkdirSync(join(projeto, "docs", "painel"), { recursive: true });
   writeFileSync(join(projeto, "docs", "painel", "mapa.json"), JSON.stringify(mapa));
 
-  const dash = rotear(projeto, "/");
+  const dash = rotear(projeto, "/").html;
   assert.ok(dash.includes("loja-demo") && dash.includes("Em desenvolvimento") && dash.includes("Aprovar a proposta do L-3"));
   assert.ok(dash.includes("centavos inteiros"));
-  assert.ok(rotear(projeto, "/sistemas").includes("API da loja"));
-  const sistema = rotear(projeto, "/sistemas/loja-api");
+  assert.ok(rotear(projeto, "/sistemas").html.includes("API da loja"));
+  const sistema = rotear(projeto, "/sistemas/loja-api").html;
   assert.ok(sistema.includes("NestJS") && sistema.includes("18.19.0") && sistema.includes("3000"));
-  const cx = rotear(projeto, "/sistemas/conexoes");
+  const cx = rotear(projeto, "/sistemas/conexoes").html;
   assert.ok(cx.includes("<svg") && cx.includes("chave de API"));
-  assert.ok(rotear(projeto, "/quadro").includes("L-2"));
-  const item = rotear(projeto, "/quadro/2");
+  assert.ok(rotear(projeto, "/quadro").html.includes("L-2"));
+  const item = rotear(projeto, "/quadro/2").html;
   for (const trecho of ["Pronto quando", "parcial", "Decisões", "PRs", "Veredito do testador", "Linha do tempo", "Achados extras", "Texto sugerido", "data-copiar"]) {
     assert.ok(item.includes(trecho), trecho);
   }
-  assert.ok(rotear(projeto, "/quadro/4").includes("RECUSADO"));
-  assert.ok(rotear(projeto, "/quadro/999").includes("Página não encontrada"));
-  const html = rotear(projeto, "/sistemas/conexoes");
+  assert.ok(rotear(projeto, "/quadro/4").html.includes("RECUSADO"));
+  const ausente = rotear(projeto, "/quadro/999");
+  assert.equal(ausente.status, 404);
+  assert.ok(ausente.html.includes("Página não encontrada"));
+  assert.equal(rotear(projeto, "/quadro/2").status, 200);
+  assert.equal(rotear(projeto, "/sistemas/nao-existe").status, 404);
+  assert.equal(rotear(projeto, "/quadro/%E0").status, 404);
+  assert.equal(rotear(projeto, "/sistemas/%E0%A4%A").status, 404);
+  const html = rotear(projeto, "/sistemas/conexoes").html;
   assert.ok(!/ghp_|sk_live|tok_EXEMPLO|senha-ficticia/.test(html + JSON.stringify(mapa)));
+});
+
+test("servidor: padrão 127.0.0.1, 404 para URL malformada e para arquivo fora de docs", async () => {
+  const base = temporario();
+  const { projeto } = criarExemplo(base);
+  const { criarServidor } = await import("../nucleo/scripts/painel/painel.mjs");
+  const servidor = criarServidor(projeto);
+  await new Promise((ok) => servidor.listen(0, "127.0.0.1", ok));
+  const porta = servidor.address().port;
+  try {
+    for (const [caminho, status] of [["/", 200], ["/quadro/%E0", 404], ["/arquivos/%E0", 404], ["/arquivos/../processo/config.json", 404], ["/arquivos/painel/x.png", 404]]) {
+      const resposta = await fetch(`http://127.0.0.1:${porta}${caminho}`);
+      assert.equal(resposta.status, status, caminho);
+    }
+  } finally {
+    servidor.close();
+  }
+  assert.equal(configPainel.lerConfig(projeto).host, "127.0.0.1");
 });
