@@ -14,6 +14,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveVars } from "./novo-core.mjs";
 import { listTemplates, outputsFor } from "./outputs.mjs";
 import { render } from "./render.mjs";
 
@@ -60,7 +61,7 @@ function syncProject(name, projectPath) {
     return;
   }
   const config = readProjectConfig(projectPath);
-  const vars = config.vars;
+  const vars = resolveVars(config.vars);
   for (const file of outputsFor(templates, vars)) {
     const template = normalize(readFileSync(join(NUCLEO, file), "utf8"));
     sync(name, join(projectPath, file), render(template, vars));
@@ -84,6 +85,10 @@ if (projectArg) {
 // Sem --project: percorre projetos.json (lista pessoal { "nome": "caminho" })
 const projectsFile = join(ROOT, "projetos.json");
 if (!existsSync(projectsFile)) {
+  if (check) {
+    console.log("[sync] sem projetos.json: nada a conferir (use --project <caminho> para um projeto avulso)");
+    process.exit(0);
+  }
   console.error(
     "[sync] projetos.json nao encontrado. Crie-o com base em projetos.exemplo.json ou use --project <caminho>.",
   );

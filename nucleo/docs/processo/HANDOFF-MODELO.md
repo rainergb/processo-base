@@ -14,7 +14,7 @@ linhas. Se passou disso, o excesso é plano e vai para o {{PREFIX}}-N, ou é dec
 - {{CHECK_LABEL}}: <passando | falhando em ...>.
 
 ## Em andamento
-- {{PREFIX}}-N: <título>, branch <nome>, status <doing | testing>. Falta: <1 linha>.
+- {{PREFIX}}-N: <título>, branch <nome>, situação <{{ST_ANDAMENTO}} | {{ST_TESTE}}>. Falta: <1 linha>.
 
 ## Próximo passo exato
 <A primeira ação da próxima sessão, em uma frase. Ex: rodar {{BOARD_ONE_CMD}}>

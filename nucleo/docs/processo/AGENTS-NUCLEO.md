@@ -19,8 +19,12 @@ hora de executar: a cota de uso acaba muito mais rápido.
 **Teto de agentes: no máximo {{AGENT_CAP}} trabalhando ao mesmo tempo**, e o segundo só se não
 tocar nos mesmos arquivos. A cota de uso é dividida entre todos.
 
-**Agentes aninhados ao líder:** todo especialista e testador é filho da sessão do líder, nunca
-sessão solta. Assim o teto é contável (a cota estourou com muitos agentes em paralelo).
+**Agentes aninhados ao líder:** todo analista, especialista e testador é filho da sessão do líder, nunca
+sessão solta. Assim o teto é contável (a cota estourou com muitos agentes em paralelo). **Sessão filha
+ligada ao líder conta no teto**, tenha ela nascido de subagente ou de sessão iniciada pelo líder.
+
+**Exceção de modelo:** o analista de proposta roda em Opus (é planejamento, só lê). Especialista e
+testador seguem em Sonnet.
 
 **Navegador e controle de tela só quando não houver caminho mais barato.** Ordem de
 preferência:
@@ -36,20 +40,28 @@ explorar.
 
 # Processo: líder, especialista e testador
 
-1. **Líder (sessão principal):** entrevista, cria o {{PREFIX}}-N, escreve o "Pronto quando" como
-   contrato verificável ("abrir X, clicar em Y, ver Z"). Planeja, revisa e mergeia. Não
-   implementa quando houver especialista disponível; ajuste trivial (uma linha, texto, nome) o
-   líder faz direto, porque abrir um agente para isso gasta mais token do que a mudança.
-2. **Especialista:** trabalha na própria branch, sem merge nem push. Entrega com
-   {{CHECK_CMD}} passando.
-3. **Testador cego (só prioridade alta):** recebe só a branch e o {{PREFIX}}-N, nunca o diff. Sobe o
-   app, {{#if E2E}}roda o e2e, {{/if}}testa item por item do "Pronto quando" e anexa prints.
-   Aprova ou recusa com passos para reproduzir. Prioridade média e baixa não levam testador:
-   valem os checks do especialista, o teste de regressão `{{PREFIX}}-N` e a conferência de
-   {{OWNER}} no status `testing`.
+Os agentes estão em `.claude/agents/` (`analista-proposta`, `especialista`, `testador`) e os modelos de
+brief e de relatório em `docs/processo/BRIEF-MODELO.md` e `docs/processo/RELATORIO-TESTE-MODELO.md`.
 
-**Fluxo:** líder cria o {{PREFIX}}-N, delega ao especialista, revisa o diff, delega ao testador
-(só prioridade alta); aprovado, mergeia na main e sobe, juntando entregas num push só.
+1. **Líder (sessão principal):** entrevista, cria o {{PREFIX}}-N, pede a proposta, leva a {{OWNER}} para
+   aprovar e transforma os critérios em contrato verificável ("abrir X, clicar em Y, ver Z"). Planeja e
+   revisa{{#unless MERGE_DONO}}, e mergeia{{/unless}}. Não implementa quando houver especialista
+   disponível; ajuste trivial (uma linha, texto, nome) o líder faz direto, porque abrir um agente para
+   isso gasta mais token do que a mudança.
+2. **Analista de proposta:** só lê. Devolve a proposta (ver "Proposta antes do código").
+3. **Especialista:** trabalha na própria branch, sem merge nem push. Entrega com
+   {{CHECK_CMD}} passando, teste de regressão e o app no ar com a URL.
+4. **Testador cego{{#unless TESTER_TODAS}} (só prioridade alta){{/unless}}:** recebe só o card, os critérios e
+   a URL, nunca o diff nem o código, e só tem ferramentas do navegador embutido. Testa a URL que o
+   especialista deixou no ar, item por item do "Pronto quando", em desktop e em 375 px.
+   {{#if E2E}}O e2e roda com o especialista. {{/if}}Aprova (APROVADO) ou recusa (RECUSADO) com passos para
+   reproduzir.{{#unless TESTER_TODAS}} Prioridade média e baixa não levam testador: valem os checks do
+   especialista, o teste de regressão `{{PREFIX}}-N` e a conferência de {{OWNER}} na situação
+   `{{ST_TESTE}}`.{{/unless}}{{#if TESTER_TODAS}} Toda prioridade passa pelo testador.{{/if}}
+
+**Fluxo:** líder cria o {{PREFIX}}-N, pede a proposta ao analista, {{OWNER}} aprova, o líder delega ao
+especialista, revisa o diff e delega ao testador{{#unless TESTER_TODAS}} (só prioridade alta){{/unless}};
+{{#if MERGE_DONO}}aprovado, o líder pede o OK de {{OWNER}} para o merge e o push.{{/if}}{{#if FLUXO_LOTE}}aprovado, mergeia na main e sobe, juntando entregas num push só.{{/if}}{{#if FLUXO_SIMPLES}}aprovado, mergeia na main e sobe.{{/if}}
 
 Recusa volta para a mesma sessão do especialista. Após 2 recusas, o líder revê a especificação.
 
@@ -58,6 +70,31 @@ o líder informa tempo gasto por etapa, quantos agentes trabalham, tempo previst
 modelo de cada um. Status de um {{PREFIX}}-N é uma checklist do que foi feito e do que falta.
 
 Para rodar o quadro em fila respeitando o teto de agentes, use a skill `/rotina-backlog`.
+
+# Proposta antes do código
+
+Nenhuma mudança começa sem proposta aprovada por {{OWNER}} (exceto ajuste trivial).
+
+1. O líder pede ao `analista-proposta` (só leitura) a proposta do {{PREFIX}}-N: causa, arquivos, opções
+   com recomendação, **correção mínima**, **achados extras**, estimativa e **critérios de pronto**.
+2. Os critérios de pronto são escritos em palavras de usuário ("abrir X, tocar em Y, ver Z"), sem citar
+   código. Viram o "Pronto quando" do item e são **o contrato**: o testador cego verifica exatamente eles.
+3. {{OWNER}} aprova a proposta (e escolhe a opção) antes de qualquer especialista começar. A aprovação e a
+   data ficam registradas no item. Mudou o escopo no meio? Nova proposta, nova aprovação.
+
+# Correção mínima
+
+- O PR leva **só o necessário** para o {{PREFIX}}-N. Nada de refactor, formatação ou "já que estou aqui".
+- Achou outro problema? **Não conserte no mesmo PR.** Vira um item novo e fica listado em "Achados extras"
+  do item de origem, com título e problema, para {{OWNER}} priorizar.
+
+# Segurança
+
+- **Produção e bancos reais só leitura**, e só com {{OWNER}} sabendo. Escrita só em banco local ou de teste.
+- **Credencial nunca em texto:** em docs, commit, item ou mensagem, cite só o arquivo e a linha onde está.
+- **Nunca ler `.env`** nem arquivo equivalente com segredo. Para saber quais variáveis existem, leia o
+  `.env.example`.
+- **Dado real de cliente fora de `docs/`**, de commit, de teste e de print. Só dados fictícios.
 
 # Sessão curta e handoff
 
@@ -88,28 +125,46 @@ Para rodar o quadro em fila respeitando o teto de agentes, use a skill `/rotina-
 - **Criar sem perguntar:** bug, risco ou ideia que aparece no caminho vira item na hora.
   Decisão de {{OWNER}} vira item próprio, prioridade alta, com opções e recomendação.
 - **Descrição de todo item** (markdown): **Problema**, **Arquivos**, **Pronto quando**
-  (checklist verificável), **Decisões** (o que, quem, quando).
+  (checklist verificável), **Decisões** (o que, quem, quando) e **Achados extras** (o que apareceu e ficou
+  fora do PR, cada um com seu {{PREFIX}}-N).
 - **Prioridade:** alta = trava, perde dado ou desloga; média = funciona errado ou confuso;
   baixa = visual ou texto.
-- **Status:** `idea` Ideia, `todo` A fazer, `doing` Em andamento, `testing` Testes (testador e
-  depois {{OWNER}}, ou esperando o OK para merge), `done` Feito (mergeado na main),
-  `dropped` Descartado. Se faltar passo manual (SQL, celular), fica `doing` com o passo no
-  checklist.
+- **Situações** (configuráveis em `SITUACOES` no `docs/processo/config.json`): {{SITUACOES_TEXTO}}.
+  O item anda uma situação por vez e a situação é a verdade sobre onde ele está. Se faltar passo manual (SQL,
+  celular), ele fica em `{{ST_ANDAMENTO}}` com o passo no checklist.
+{{#if POS_DEPLOY}}- **Verificação pós-deploy:** mergeado não é finalizado. Depois do deploy, confira em produção, só
+  leitura, que o comportamento do "Pronto quando" apareceu; só então o item vai para a situação final.
+{{/if}}
 - **Plano fica no item.** Doc em `docs/` só para assunto longo; o item aponta, sem duplicar.
 
 # Git
 
-- Commit começa pelo código: `{{PREFIX}}-12 feat(widgets): contrato de widget`. Tipos: feat, fix,
+{{#if COMMIT_CONVENTIONAL}}- Commit em Conventional Commits, com o item no fim: `fix: corrige filtro de data ({{PREFIX}}-12)`.
+  Tipos: feat, fix, refactor, chore, docs, test.
+{{/if}}{{#unless COMMIT_CONVENTIONAL}}- Commit começa pelo código: `{{PREFIX}}-12 feat(widgets): contrato de widget`. Tipos: feat, fix,
   refactor, chore, docs, test.
+{{/unless}}
 - Uma branch por {{PREFIX}}-N: `feat/{{PREFIX_LOWER}}-12-contrato-widget`.
-- Merge na main sem perguntar quando {{CHECK_CMD}} e o teste funcional passaram. Pergunte antes
+{{#if MERGE_DONO}}- **Merge e push só com OK de {{OWNER}}.** O líder apresenta o diff, os checks e o veredito do
+  testador e espera a aprovação explícita de {{OWNER}}; sem ela, a branch fica pronta e parada. Nenhum
+  agente faz merge nem push por conta própria.
+{{/if}}{{#unless MERGE_DONO}}- Merge na main sem perguntar quando {{CHECK_CMD}} e o teste funcional passaram. Pergunte antes
   se mexer em banco de produção ou dado de usuário, ou se for algo arriscado.
+{{/unless}}
 - Mensagem do merge: `{{PREFIX}}-12, {{PREFIX}}-15: merge feat/... na main`, corpo com uma linha
   por {{PREFIX}}-N.
-- **Push em lote:** junte os commits de uma etapa num push só.
+{{#if PUSH_OK_DONO}}- **Push só com OK de {{OWNER}}**, com os commits da etapa juntos num push só.
+{{/if}}{{#unless PUSH_OK_DONO}}- **Push em lote:** junte os commits de uma etapa num push só.
+{{/unless}}
 - **Worktree separada** se a pasta tiver mudança alheia.
 
-# Testes
+{{#if MULTI_REPO}}# Vários repositórios
+
+Este projeto cobre {{REPOS_TEXTO}}. O item diz em qual repositório cada mudança acontece; uma branch por
+repositório, com o mesmo {{PREFIX}}-N no nome. Commit, merge e push valem por repositório. O painel
+(`npm run mapa`) lê todos eles.
+
+{{/if}}# Testes
 
 - **Bug corrigido vem com teste de regressão** que falha antes e passa depois, com nome
   `it("{{PREFIX}}-12: ...")`. Escreva o teste com o caso real, veja-o falhar, corrija, veja-o

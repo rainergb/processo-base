@@ -2,9 +2,9 @@
 // Copiado por processo-base (modelos/projeto). Quando o projeto ganhar banco, troque os scripts
 // por versões que falam com ele e mantenha a mesma interface de linha de comando.
 
-export const STATUSES = ["doing", "testing", "todo", "idea", "done", "dropped"];
+export const STATUSES = {{SITUACOES_IDS_JSON}};
 export const PRIORITIES = ["alta", "media", "baixa"];
-export const OPEN = ["idea", "todo", "doing", "testing"];
+export const OPEN = {{SITUACOES_ABERTAS_JSON}};
 export const FIELDS = ["title", "summary", "description", "area", "kind", "priority", "status"];
 
 export function emptyBoard(prefix) {
@@ -65,7 +65,7 @@ export function saveItem(board, fields, update, now = new Date().toISOString()) 
     return { board: { ...board, items: board.items.map((i) => (i.ref === item.ref ? item : i)) }, item };
   }
   const ref = board.items.reduce((max, i) => Math.max(max, i.ref), 0) + 1;
-  const item = { ref, status: "todo", priority: "media", area: "geral", kind: "task", ...fields, createdAt: now, updatedAt: now };
+  const item = { ref, status: "{{ST_FILA}}", priority: "media", area: "geral", kind: "task", ...fields, createdAt: now, updatedAt: now };
   validate(item);
   return { board: { ...board, items: [...board.items, item] }, item };
 }

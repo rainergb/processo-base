@@ -1,5 +1,5 @@
 // Lê o quadro {{PREFIX}}-N (docs/backlog.json).
-//   npm run backlog              itens abertos (ideia, a fazer, em andamento, testes)
+//   npm run backlog              itens abertos (tudo que não está fechado)
 //   npm run backlog -- --all     todos
 //   npm run backlog -- {{PREFIX}}-12    um item completo
 import { existsSync, readFileSync } from "node:fs";
