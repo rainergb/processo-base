@@ -25,7 +25,13 @@ Faça estas perguntas, uma de cada vez (não liste tudo de uma vez):
 5. **Testes e2e:** "O projeto tem testes e2e? (s/n)"
 6. **Design system:** "O projeto usa design system? (s/n) Se sim, onde fica? (ex: `src/components/ui`, `packages/ui`)"
 7. **Regra de código de tela sem comentários:** "Quer proibir comentários em código de tela (componentes, hooks, páginas)? (s/n)"
-8. **Regra do travessão:** "Quer proibir o uso do travessão (—) em código, docs e commits? (s/n)"
+8. **Regra do travessão:** "Quer proibir o uso do travessão em código, docs e commits? (s/n)"
+9. **Merge e push:** "Quem decide o merge e o push? `lider` (o líder mergeia quando os checks passam, padrão) ou `dono` (só com o seu OK explícito)?" Se `dono`, o push também só com OK.
+10. **Push:** "Push em lote (`lote`, padrão) ou só com o seu OK (`dono`)?" Pule se respondeu `dono` na pergunta 9.
+11. **Estilo de commit:** "`prefixo` (padrão: `P-12 feat(x): ...`) ou `conventional` (`fix: ... (P-12)`)?"
+12. **Testador:** "O testador cego roda só em prioridade alta (`alta`, padrão) ou em toda prioridade (`todas`)?"
+13. **Vários repositórios:** "O projeto cobre mais de um repositório? Se sim, liste `nome=caminho` separados por vírgula. Se não, deixe vazio (usa o repositório atual)."
+14. **Painel:** "Quer o painel local (`npm run mapa` e `npm run painel`, sem dependências)? (s/n, padrão s)"
 
 ## Execução
 
@@ -36,10 +42,12 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/novo.mjs" \
   --nome <nome-do-diretorio-atual> \
   --caminho . \
   --prefixo <PREFIXO> \
-  --dono "<DONO>"
+  --dono "<DONO>" \n  [--merge lider|dono] [--push lote|dono] [--commit prefixo|conventional] \n  [--testador alta|todas] [--repos "api=../api,web=../web"] [--sem-painel]
 ```
 
-Depois ajuste `docs/processo/config.json` conforme as respostas (CHECK_CMD, PURE_LOGIC_DIR, E2E, DESIGN_APPROVAL, DESIGN_SYSTEM_WHERE, DESIGN_PLACES, NO_UI_COMMENTS, NO_EM_DASH).
+Só passe as opções que o usuário mudou do padrão.
+
+Depois ajuste `docs/processo/config.json` conforme as respostas (CHECK_CMD, PURE_LOGIC_DIR, E2E, DESIGN_APPROVAL, DESIGN_SYSTEM_WHERE, DESIGN_PLACES, NO_UI_COMMENTS, NO_EM_DASH). As opções de merge, push, commit, testador, repositórios e painel já saem do comando; para mudá-las depois, edite `MERGE_POLICY`, `PUSH_POLICY`, `COMMIT_STYLE`, `TESTER_SCOPE`, `REPOS` e `PAINEL` no config e rode `/processo:sincronizar`.
 
 ## Resultado
 

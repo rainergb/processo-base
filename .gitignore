@@ -1,3 +1,4 @@
 node_modules/
 # Lista pessoal de projetos (nao commitada; use projetos.exemplo.json como base)
 projetos.json
+exemplos/

@@ -2,7 +2,7 @@
 //   npm run backlog:add -- --title "..." [--priority alta] [--area x] [--description "..."]
 //   npm run backlog:add -- --update {{PREFIX}}-3 --status doing
 // Campos: title, summary, description, area, kind, priority (alta, media, baixa) e status
-// (idea, todo, doing, testing, done, dropped).
+// ({{SITUACOES_TEXTO}}).
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { code, emptyBoard, pickFields, saveItem } from "./backlog-core.mjs";
 
