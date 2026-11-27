@@ -42,7 +42,8 @@ templates), passe o caminho da pasta no lugar de `rainergb/processo-base`.
 
 No `novo`: `--merge`, `--push`, `--commit`, `--testador`, `--repos "api=../api,web=../web"`, `--sem-painel`.
 Projeto que já usa o plugin: rode `/processo:sincronizar`; os arquivos novos aparecem e nada do que existia
-muda. Para ligar o painel num projeto antigo, ponha `"PAINEL": true` no config e adicione ao `package.json`
+muda. O sync só sobrescreve arquivo de `.claude/agents` e `.claude/skills` que tenha o marcador GERADO: agente
+ou skill próprio do projeto (sem o marcador) é mantido e listado no resumo do sync. Para ligar o painel num projeto antigo, ponha `"PAINEL": true` no config e adicione ao `package.json`
 `"mapa": "node scripts/painel/mapa.mjs"`, `"painel": "node scripts/painel/painel.mjs"` e
 `"conexoes": "node scripts/painel/conexoes.mjs"`.
 
@@ -50,10 +51,13 @@ muda. Para ligar o painel num projeto antigo, ponha `"PAINEL": true` no config e
 
 ```
 npm run mapa      # coleta cada repositório do config e grava docs/painel/mapa.json
-npm run painel    # sobe em http://localhost:3340 (porta: --porta, PORT ou PAINEL_PORT), também na rede
+npm run painel    # sobe em http://127.0.0.1:3340 (porta: --porta, PORT ou PAINEL_PORT)
 npm run conexoes  # grava docs/painel/conexoes.svg
 ```
 
+- **Rede:** o painel não tem login, então por padrão só escuta em `127.0.0.1`. Para abrir na rede use
+  `npm run painel -- --rede` ou `PAINEL_HOST` no config (`0.0.0.0`). O mapa grava hosts internos, por isso
+  o `novo` e o `sync` (com `PAINEL` ligado) acrescentam `docs/painel/` ao `.gitignore` do projeto.
 - **Mapa:** stack e versões (`package.json`), Node (`.nvmrc`, `.node-version`, `engines`), porta (só de
   `.env.example`, `environment*.ts` e `main.ts`), arquivos, commits, último commit e branch padrão. **Nunca lê
   `.env`.** Do que acha, guarda só host e porta: valor de chave, senha ou token nunca vai para o `mapa.json`.
