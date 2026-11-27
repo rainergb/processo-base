@@ -1,0 +1,13 @@
+{
+  "name": "processo-base",
+  "owner": {
+    "name": "processo-base"
+  },
+  "plugins": [
+    {
+      "name": "processo",
+      "source": "./",
+      "description": "Processo de trabalho com agentes para Claude Code: quadro P-N, handoff, líder/especialista/testador e skills de sincronização."
+    }
+  ]
+}

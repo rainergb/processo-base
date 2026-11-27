@@ -1,0 +1,11 @@
+{
+  "name": "processo-base",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync.mjs",
+    "sync:check": "node scripts/sync.mjs --check",
+    "test": "node --test scripts/*.test.mjs",
+    "novo": "node scripts/novo.mjs"
+  }
+}
