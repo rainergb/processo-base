@@ -7,6 +7,12 @@
 //   --caminho    caminho do projeto [padrao: diretorio atual]
 //   --prefixo    prefixo do quadro, ex: M (1 a 3 letras maiusculas) [obrigatorio]
 //   --dono       nome de quem decide e aprova no projeto (OWNER) [obrigatorio]
+//   --merge      lider (padrao) ou dono: merge e push so com OK do dono
+//   --push       lote (padrao) ou dono
+//   --commit     prefixo (padrao) ou conventional
+//   --testador   alta (padrao) ou todas: quais prioridades passam pelo testador
+//   --repos      "nome=caminho,nome2=caminho2" para projeto com varios repositorios
+//   --sem-painel nao gera os scripts do painel
 //   --registrar  se fornecido, adiciona o caminho ao projetos.json do processo-base
 //
 // 1. Escreve docs/processo/config.json no projeto com as variaveis padrao.
@@ -17,7 +23,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defaultVars, withBoardScripts } from "./novo-core.mjs";
+import { defaultVars, parseRepos, resolveVars, withBoardScripts } from "./novo-core.mjs";
 import { listTemplates } from "./outputs.mjs";
 import { render } from "./render.mjs";
 
@@ -49,6 +55,11 @@ if (!nome || !prefixo || !dono) {
 }
 
 const vars = defaultVars({ nome, prefixo, dono });
+const escolhas = { MERGE_POLICY: options.merge, PUSH_POLICY: options.push, COMMIT_STYLE: options.commit, TESTER_SCOPE: options.testador };
+for (const [chave, valor] of Object.entries(escolhas)) if (typeof valor === "string") vars[chave] = valor;
+if (typeof options.repos === "string") vars.REPOS = parseRepos(options.repos);
+if (options["sem-painel"]) vars.PAINEL = false;
+const resolved = resolveVars(vars);
 const projectPath = String(caminho).replace(/\\/g, "/");
 mkdirSync(projectPath, { recursive: true });
 
@@ -77,7 +88,7 @@ for (const file of listTemplates(modelos)) {
   }
   const template = readFileSync(join(modelos, file), "utf8").replace(/\r\n/g, "\n");
   mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, render(template, { ...vars, ...extra }), "utf8");
+  writeFileSync(target, render(template, { ...resolved, ...extra }), "utf8");
   console.log(`[novo] criado: ${file}`);
 }
 
@@ -85,8 +96,8 @@ for (const file of listTemplates(modelos)) {
 const pkgFile = join(projectPath, "package.json");
 if (existsSync(pkgFile)) {
   const pkg = JSON.parse(readFileSync(pkgFile, "utf8"));
-  writeFileSync(pkgFile, `${JSON.stringify(withBoardScripts(pkg), null, 2)}\n`, "utf8");
-  console.log("[novo] package.json: scripts backlog e backlog:add");
+  writeFileSync(pkgFile, `${JSON.stringify(withBoardScripts(pkg, { painel: Boolean(vars.PAINEL) }), null, 2)}\n`, "utf8");
+  console.log("[novo] package.json: scripts do quadro e do painel");
 } else {
   console.log("[novo] sem package.json: rode o quadro com `node scripts/backlog.mjs`");
 }
