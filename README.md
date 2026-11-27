@@ -82,7 +82,34 @@ npm run conexoes  # grava docs/painel/conexoes.svg
 /processo:sincronizar   # regera os arquivos com a versão mais recente dos templates
 ```
 
-Os scripts só usam módulos do Node, então não é preciso `npm install`.
+Os scripts só usam módulos do Node, então não é preciso `npm install`. Precisam do **Node 18 ou
+mais novo** (o `npm test` usa `node --test`). Com o nvm: `nvm use 24` antes.
+
+## Usar o quadro
+
+Depois do `/processo:iniciar`, o quadro fica em `docs/backlog.json` e é lido e gravado pelos
+scripts do projeto. O prefixo (`P` abaixo) é o escolhido na entrevista.
+
+```
+npm run backlog:add -- --title "Cupom de desconto no carrinho" --priority alta --description "**Problema:** o cupom não aplica no carrinho.
+**Pronto quando:**
+- [ ] abrir o carrinho, digitar o cupom e ver o desconto no total"
+npm run backlog                                   # itens abertos
+npm run backlog -- --all                          # todos
+npm run backlog -- P-1                            # um item completo
+npm run backlog:add -- --update P-1 --status desenvolvimento
+```
+
+- **Prioridade:** `alta`, `media` ou `baixa`.
+- **Situações** (projeto novo): `proposta`, `desenvolvimento`, `revisao`, `teste`, `testado`,
+  `commitado`, `mergeado`, `finalizado` e `descartado`. Projeto que veio da 0.1 continua com
+  `idea`, `todo`, `doing`, `testing`, `done` e `dropped`. A lista vale pela variável `SITUACOES`
+  do `docs/processo/config.json` e aparece no topo de `scripts/backlog-add.mjs`.
+- **Descrição do item** em markdown, com as seções **Problema**, **Arquivos**, **Pronto quando**
+  (checklist `- [ ]`, `- [x]` feito, `- [~]` parcial) e **Decisões**.
+- **Na prática** quem cria e move os itens é o líder (a sessão principal), antes do código, e a
+  skill `/rotina-backlog` roda a fila respeitando o teto de agentes. Com `PAINEL` ligado,
+  `npm run painel` mostra o quadro e a página de cada item.
 
 ## O que é gerado
 
