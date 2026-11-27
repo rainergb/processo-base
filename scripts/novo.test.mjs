@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { spawnSync } from "node:child_process";
 
 const RAIZ = join(import.meta.dirname, "..");
 
@@ -73,4 +74,47 @@ test("projeto com config da 0.1 continua sincronizando, sem painel", () => {
   assert.match(nucleo, /Merge na main sem perguntar/);
   assert.match(nucleo, /`doing` Em andamento/);
   assert.match(rodar("sync.mjs", "--project", dir, "--check"), /tudo em dia/);
+});
+
+test("sync mantém agente e skill próprios do projeto (sem o marcador) e avisa", () => {
+  const dir = projetoNovo();
+  const proprio = join(dir, ".claude", "agents", "especialista.md");
+  const skill = join(dir, ".claude", "skills", "rotina-backlog", "SKILL.md");
+  writeFileSync(proprio, "---\nname: especialista\n---\nAgente escrito à mão.\n");
+  writeFileSync(skill, "Skill própria sem marcador.\n");
+  const saida = rodar("sync.mjs", "--project", dir);
+  assert.match(readFileSync(proprio, "utf8"), /escrito à mão/);
+  assert.match(readFileSync(skill, "utf8"), /própria sem marcador/);
+  assert.match(saida, /mantido: .*\.claude\/agents\/especialista\.md/);
+  assert.match(saida, /mantido: .*rotina-backlog/);
+  assert.match(saida, /concluido/);
+  assert.match(rodar("sync.mjs", "--project", dir, "--check"), /tudo em dia/);
+  const gerado = join(dir, ".claude", "agents", "testador.md");
+  writeFileSync(gerado, `${readFileSync(gerado, "utf8")}\nlixo\n`);
+  rodar("sync.mjs", "--project", dir);
+  assert.ok(!readFileSync(gerado, "utf8").includes("lixo"));
+});
+
+test("PAINEL ligado garante docs/painel/ no .gitignore sem duplicar", () => {
+  const dir = projetoNovo();
+  const arquivo = join(dir, ".gitignore");
+  const conta = () => readFileSync(arquivo, "utf8").split("\n").filter((l) => l.trim() === "docs/painel/").length;
+  assert.equal(conta(), 1);
+  rodar("sync.mjs", "--project", dir);
+  assert.equal(conta(), 1);
+
+  writeFileSync(arquivo, "node_modules/");
+  assert.throws(() => rodar("sync.mjs", "--project", dir, "--check"));
+  rodar("sync.mjs", "--project", dir);
+  assert.equal(readFileSync(arquivo, "utf8"), "node_modules/\ndocs/painel/\n");
+
+  const semPainel = projetoNovo("--sem-painel");
+  assert.ok(!existsSync(join(semPainel, ".gitignore")));
+});
+
+test("sync --check sem projetos.json e sem --project falha com mensagem clara", () => {
+  if (existsSync(join(RAIZ, "projetos.json"))) return;
+  const resultado = spawnSync(process.execPath, [join(RAIZ, "scripts", "sync.mjs"), "--check"], { encoding: "utf8" });
+  assert.equal(resultado.status, 1);
+  assert.match(resultado.stderr, /nada foi conferido/);
 });
